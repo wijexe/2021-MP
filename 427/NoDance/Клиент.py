@@ -5,15 +5,14 @@ import time as ti
 # РљР»РёРµРЅС‚
 class Client():
     def __init__(self): # Р—Р°РїСѓСЃРє РєР»РёРµРЅС‚Р°, РІРІРѕРґ РЅРёРєР°
-        # вынести этот код в отдельный класс, где вся эта рутина будет вызываться одной строкой
-        # например startClientSocket('localhost', self.port)
+        # РІРЅРµСЃС‚Рё РІСЃСЋ СЌС‚Сѓ СЂСѓС‚РёРЅСѓ РІ РѕС‚РґРµР»СЊРЅС‹Р№ РєР»Р°СЃСЃ Рё РІС‹Р·РІР°С‚СЊ РЅР°РїСЂРёРјРµСЂ startClientSocket('localhost', self.port)
         self.host='127.0.0.1' ; self.port=3000 ; self.b_size=1024
         self.sockaddr=(self.host,self.port) ; self.title="Р’С‹Р№С‚Рё"
         self.client=socket(AF_INET,SOCK_DGRAM)
         #self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.nick=input("Р’РІРµРґРёС‚Рµ РЅРёРє: ")
         nick_msg="n_"+self.nick
-        # это тоже вынести в что-то вроде connectToServer, где будут все необходимые сообщения серверу. Или делать это в том же startClientSocket
+        # РІРЅРµСЃС‚Рё СЌС‚Рѕ С‚РѕР¶Рµ РІ connectToServer, РёР»Рё РІСЃС‚Р°РІРёС‚СЊ РІ startClientSocket
         self.client.sendto(nick_msg.encode('utf-8'),self.sockaddr)
         self.run=True
         

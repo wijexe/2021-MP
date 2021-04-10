@@ -52,6 +52,7 @@ class Client():
                 self.client.sendto(data.encode('utf-8'),self.sockaddr)
                 ti.sleep(0.1)
             else:
+                # sendMsg()
                 d=data.encode('utf-8')
                 self.client.sendto(d,self.sockaddr)
                 if data.endswith('qqq'):
