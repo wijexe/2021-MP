@@ -2,7 +2,7 @@ import socket
 from tkinter import *
 import random, time
 
-SERVER_IP = '192.168.1.106'
+SERVER_IP = socket.gethostbyname(socket.gethostname())  # Depends on machine!
 SERVER_PORT = 50050
 SERVER_ADDR = (SERVER_IP, SERVER_PORT)
 SERVER_CONN_ADDR = (SERVER_IP, SERVER_PORT-1)
