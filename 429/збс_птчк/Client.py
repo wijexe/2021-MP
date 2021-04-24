@@ -1,10 +1,11 @@
 import socket
 from tkinter import *
-import random
+import random, time
 
 SERVER_IP = '192.168.1.106'
 SERVER_PORT = 50050
 SERVER_ADDR = (SERVER_IP, SERVER_PORT)
+SERVER_CONN_ADDR = (SERVER_IP, SERVER_PORT-1)
 
 CLIENT_IP = socket.gethostbyname(socket.gethostname())
 CLIENT_PORT = random.randint(50051, 60000)
@@ -12,7 +13,7 @@ CLIENT_ADDR = (CLIENT_IP, CLIENT_PORT)
 
 FORMAT = 'utf-8'
 TITLE = 'Chat'
-SIZE = '400x300'
+SIZE = '600x400'
 DEFAULT_NICKNAME = 'Guest-' + str(random.randint(1, 100))
 
 class Client:
@@ -81,6 +82,26 @@ class Client:
         return self._port
 
 
+class ConnectToServer:
+    def __init__(self, addr=SERVER_CONN_ADDR):
+        self._addr = addr
+
+    def Connecting(self, sock, name):
+        isConnected = False
+        servAddr = self.getAddress()
+        while not isConnected:
+            try:
+                sock.sendto(name.encode(FORMAT), servAddr)
+                answer = sock.recv(1).decode(FORMAT)
+                isConnected = bool(answer)
+            except:
+                time.sleep(1)
+        print('Connected to server')
+    
+    def getAddress(self):
+        return self._addr
+
+
 class ClientWindow:
     def __init__(self, title=TITLE, size=SIZE, defaultName=DEFAULT_NICKNAME):
         self._tk = Tk()
@@ -119,8 +140,8 @@ class ClientWindow:
 
 
 class Messenger:
-    def __init__(self):
-        pass
+    def __init__(self, nickname):
+        self._nickname = nickname
 
     def loop(self, tk, log, sock):
         log.see(END)
@@ -133,24 +154,55 @@ class Messenger:
             tk.after(10, self.loop, tk, log, sock)
 
     def send(self, event, nickname, text, sock):
-        message = f'{nickname.get()}: {text.get()}'
+        old_nickname = self.getNickname()
+        nickname = nickname.get()
+
+        if nickname != old_nickname:
+            print('Waiting for the nickname change...')
+            isApproved = False
+            while not isApproved:
+                try:
+                    sock.sendto(nickname.encode(FORMAT), SERVER_CONN_ADDR)
+                    answer = sock.recv(1).decode(FORMAT)
+                    isApproved = bool(answer)
+                except:
+                    time.sleep(1)
+            print('Nickname changed')
+            self.setNickname(nickname)
+
+        message = '%s' % text.get()
         sock.sendto(message.encode(FORMAT), SERVER_ADDR)
         text.set('')
 
+    def setNickname(self, nickname):
+        self._nickname = nickname
+
+    def getNickname(self):
+        return self._nickname
+
 
 if __name__ == '__main__':
+
     client = Client()
     client.RunSocket()
-    window = ClientWindow()
+    nickname = input('Please enter your nickname: ')
+    if nickname == '':
+        nickname = DEFAULT_NICKNAME
+    window = ClientWindow(defaultName=nickname)
 
-    messenger = Messenger()
+    messenger = Messenger(nickname)
     msg = window.getMessage()
     nickname = window.getNickname()
     text = window.getText()
     sock = client.getSocket()
     msg.bind('<Return>', 
              lambda event: messenger.send(event, nickname, text, sock))
+
+    connection = ConnectToServer()
+    connection.Connecting(sock, nickname.get())
+
     tk = window.getTK()
     log = window.getLog()
-    tk.after(10, messenger.loop, tk, log, sock)
+    tk.after(1, messenger.loop, tk, log, sock)
     tk.mainloop()
+    sock.sendto('!DISCONNECT'.encode(FORMAT), SERVER_CONN_ADDR)
