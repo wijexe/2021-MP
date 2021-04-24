@@ -136,7 +136,7 @@ class ClientsList:
                     name = self.getNameByAddr(addr)
                     clients.remove((name, addr))
                     msg1 = f'[SERVER] {name} disconnected from the server!\n'
-                    msg2 = f'[SERVER] Now conncected: {len(clients)} users'
+                    msg2 = f'[SERVER] Now connected: {len(clients)} users'
                     message = msg1 + msg2
                     sock.sendto(message.encode(FORMAT), SERVER_ADDR)
                     continue
@@ -154,7 +154,7 @@ class ClientsList:
                     clients.add(new_client.getData())
                     sock.sendto('1'.encode(FORMAT), addr)    # Saying to the client that he's connected
                     msg1 = f'[SERVER] {name} connected to the server!\n'
-                    msg2 = f'[SERVER] Now conncected: {len(clients)} users'
+                    msg2 = f'[SERVER] Now connected: {len(clients)} users'
                     message = msg1 + msg2
                     sock.sendto(message.encode(FORMAT), SERVER_ADDR)
             except:
