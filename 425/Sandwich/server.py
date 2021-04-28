@@ -1,68 +1,54 @@
-import socket
+from Socket import Socket
 import threading
 
-server = socket.socket(
 
-    socket.AF_INET,
-    socket.SOCK_STREAM,
+class Server(Socket):
+    def __init__(self):
+        super(Server, self).__init__()
+        server.listen(5)
 
-    )
+        print('server is listening')
 
-server.bind(
-    ('127.0.0.1', 1234)
-    )
+        self.users = []
 
-server.listen(5)
+    def send_data(self, data):
+        for user in self.users:
+            user.send(data)
 
-print('server is listening')
+    def listen_socket(self, listened_socket=None):
+        print("Listening user")
 
-users = []
+        while True:
+            data = listened_socket.recv(2048)
+            print(f"User sent {data}")
 
-def send_all(data):
-    
-    for user in users:
-        
-        user.send(data)
+            self.send_data(data)
 
-        
-def listen_user(user):
-    while True:
-        
-        data = user.recv(2048)
-        
-        print(f'пользователь отправил {data}')
-        
-        send_all(data)
+    def accept_sockets(self):
+        while True:
+            user_socket, address = self.accept()
+            print(f"User <{address[0]}> connected!")
 
-def start_server():
+            self.users.append(user_socket)
+            listen_accepted_user = threading.Thread(
+                target=self.listen_socket,
+                args=(user_socket,)
+            )
+            listen_accepted_user.start()
+
+
   
     
 
-    while True:
-        
-        user_socket, address = server.accept()
-        
-        print(f' user <{address[0]}> connected!')
 
-        users.append(user_socket)
-        
-        listen_accepted_user = threading.Thread(
-            target=listen_user,
-            args=(user_socket, ))
-        
-        listen_accepted_user.start()
-        
-        
-
-       
         
 
   
 
 if __name__ == '__main__':
 
-    
-    start_server()
+    server = Server()
+    server.set_up()
 
     
 
