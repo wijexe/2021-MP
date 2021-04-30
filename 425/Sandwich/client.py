@@ -1,5 +1,6 @@
 
-from  Socket import Socket
+from Socket import Socket
+import random
 from datetime import datetime
 
 from os import system
@@ -13,6 +14,10 @@ class Client(Socket):
     def __init__(self):
         super(Client, self).__init__()
         self.messages = ""
+        self.name = input('Please write your name here: ')
+        if self.name == '':
+            self.name = 'Guest' + str(random.randint(1000, 9999))
+            print('Your name is:' + self.name)
 
     def set_up(self):
         try:
@@ -26,22 +31,28 @@ class Client(Socket):
         self.socket.setblocking(False)
 
         
-        async def listen_socket(self, listened_socket=None):
-            while True:
-                data = await self.main_loop.sock_recv(self.socket, 2048)
-                self.messages += f"{datetime.now().date()}: {data.decode('utf-8')}\n"
+    async def listen_socket(self, listened_socket=None):
+        while True:
 
-        system("cls")
-        print(self.messages)
+            data = await self.main_loop.sock_recv(self.socket, 2048)
+            self.messages += f"{datetime.now().date()}: {data.decode('utf-8')}\n"
+
+            system("cls")
+            print(self.messages)
 
     async def send_data(self, data=None):
         while True:
-            self.send(input(":::").encode("utf-8"))
+
             data = await self.main_loop.run_in_executor(None, input)
+            if data == 'qqq':
+                break
+            elif data == '':
+                continue
+            data = '[' + self.name + ']' + '->' + data
             await self.main_loop.sock_sendall(self.socket, data.encode("utf-8"))
 
-        async def main(self):
-            await asyncio.gather(
+    async def main(self):
+        await asyncio.gather(
 
                     self.main_loop.create_task(self.listen_socket()),
                     self.main_loop.create_task(self.send_data())
