@@ -15,6 +15,55 @@ port = random.randint(6000,10000)
 connection_logic = False
 data=''
 k = 0
+dictionary = ["яблоко","банан","персик","киви","апельсин","мандарин","памело","груша"]
+d =   {'а' : ['а', 'a', '@'],
+  'б' : ['б', '6', 'b'],
+  'в' : ['в', 'b', 'v'],
+  'г' : ['г', 'r', 'g'],
+  'д' : ['д', 'Д','d'],
+  'е' : ['е', 'ё','e'],
+  'ё' : ['ё', 'ё','e'],
+  'ж' : ['ж', 'zh', '*'],
+  'з' : ['з', '3', 'z'],
+  'и' : ['и', 'u', 'i'],
+  'й' : ['й', 'u', 'i'],
+  'к' : ['к', 'k', 'i{', '|{'],
+  'л' : ['л', 'l', 'ji'],
+  'м' : ['м', 'm'],
+  'н' : ['н', 'h', 'n'],
+  'о' : ['о', 'o', '0'],
+  'п' : ['п', 'n', 'p'],
+  'р' : ['р', 'r', 'p'],
+  'с' : ['с', 'c', 's'],
+  'т' : ['т', 'm', 't'],
+  'у' : ['у', 'y', 'u'],
+  'ф' : ['ф', 'f'],
+  'х' : ['х', 'Х','x', 'h' , '}{'],
+  'ц' : ['ц', 'c', 'u,'],
+  'ч' : ['ч', 'ch'],
+  'ш' : ['ш', 'sh'],
+  'щ' : ['щ', 'sch'],
+  'ь' : ['ь', 'b'],
+  'ы' : ['ы', 'bi'],
+  'ъ' : ['ъ'],
+  'э' : ['э', 'e'],
+  'ю' : ['ю', 'io'],
+  'я' : ['я', 'ya']
+}
+def distance(a, b): 
+    n, m = len(a), len(b)
+    if n > m:
+        a, b = b, a
+        n, m = m, n
+    current_row = range(n + 1)
+    for i in range(1, m + 1):
+        previous_row, current_row = current_row, [i] + [0] * n
+        for j in range(1, n + 1):
+            add, delete, change = previous_row[j] + 1, current_row[j - 1] + 1, previous_row[j - 1]
+            if a[j - 1] != b[i - 1]:
+                change += 1
+            current_row[j] = min(add, delete, change)
+    return current_row[n]
 
 def clientStart():
 	global data,name,serverIP,server
@@ -35,12 +84,30 @@ def clientStart():
 	s.sendto(data.encode('utf-8'),server)# отправляем информацию на сервер при выходе(qqq)
 
 def sendMessage(event):
-	global data, chatText, k
+	global data, chatText, k, dictionary, d, distance
 	k+=1
 	data = messageInput.get()
+	fragments = []
+	data_tmp = data.lower().replace(" ", "")
+	for key, value in d.items():
+		 for letter in value:
+		 	 for phr in data_tmp:
+		 	 	if letter == phr:
+		 	 		data = data.replace(phr, key)
+	for word in dictionary:
+		for part in range(len(data_tmp)):
+			fragment = data_tmp[part: part+len(word)]
+			if distance(fragment, word) <= len(word)*0.25:
+				fragments.append(fragment)
+	for word in dictionary:
+		for fragment in fragments:
+			if word == fragment:
+				data = data.lower().replace(word, len(word)*"*")
 	nowTime = datetime.datetime.today().strftime("%H:%M:%S")
-	mes = '('+nowTime+') ['+ name + '] -> ' + messageInput.get()
-	print(mes)
+	mes = '('+nowTime+') ['+ name + '] -> ' + data
+	for word in dictionary:
+		mes = mes.lower().replace(word, len(word)*"*")
+	#print(mes)
 	if k>13:
 		chatText.delete("1.0","2.0")
 		chatText.insert(END, mes+'\n')
@@ -49,12 +116,30 @@ def sendMessage(event):
 	messageInput.delete(0, END)
 
 def sendMessage2():
-	global data, chatText, k
+	global data, chatText, k, dictionary, d, distance
 	k+=1
 	data = messageInput.get()
+	fragments = []
+	data_tmp = data.lower().replace(" ", "")
+	for key, value in d.items():
+		 for letter in value:
+		 	 for phr in data_tmp:
+		 	 	if letter == phr:
+		 	 		data = data.replace(phr, key)
+	for word in dictionary:
+		for part in range(len(data_tmp)):
+			fragment = data_tmp[part: part+len(word)]
+			if distance(fragment, word) <= len(word)*0.25:
+				fragments.append(fragment)
+	for word in dictionary:
+		for fragment in fragments:
+			if word == fragment:
+				data = data.lower().replace(word, len(word)*"*")
 	nowTime = datetime.datetime.today().strftime("%H:%M:%S")
-	mes = '('+nowTime+') ['+ name + '] -> ' + messageInput.get()
-	print(mes)
+	mes = '('+nowTime+') ['+ name + '] -> ' + data
+	for word in dictionary:
+		mes = mes.lower().replace(word, len(word)*"*")
+	#print(mes)
 	if k>13:
 		chatText.delete("1.0","2.0")
 		chatText.insert(END, mes+'\n')
@@ -69,7 +154,7 @@ def ReceiveData(sock):
 			k+=1
 			data,addr = sock.recvfrom(1024)
 			mesIn = data.decode('utf-8')
-			print(mesIn)
+			#print(mesIn)
 			if k>13:
 				chatText.delete("1.0","2.0")
 				chatText.insert(END, mesIn+'\n')
