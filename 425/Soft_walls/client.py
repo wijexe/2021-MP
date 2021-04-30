@@ -4,8 +4,8 @@ import threading
 import random
 import os
 
-###############################################################################
-#CLIENT
+
+T
 class Client:
     def start(self):
         self.sct = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -87,4 +87,3 @@ def RunClient(IP, Port):
             dc.sender(c.getSocket(), inp)
             
     os._exit(1)
-###############################################################################
