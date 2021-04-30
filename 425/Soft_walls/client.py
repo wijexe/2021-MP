@@ -5,7 +5,7 @@ import random
 import os
 
 
-T
+
 class Client:
     def start(self):
         self.sct = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
