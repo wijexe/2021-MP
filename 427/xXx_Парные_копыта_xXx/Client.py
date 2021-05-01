@@ -69,7 +69,8 @@ class Client(QtWidgets.QMainWindow, GUI.Ui_MainWindow):
         self.set_port(random.randint(6000, 10000))
         self.set_host(socket.gethostbyname(myHostName)) #написано для дальнейшей реализации
         self.textBrowser.setTextColor(QColor(180, 30, 30, 210))
-        self.textBrowser.append("Ваш новый порт: " + str(self.get_port()))
+        self.textBrowser.append(" Ваш новый порт: " + str(self.get_port()))
+        self.textBrowser.append('')
 
 
     def runClient(self):
