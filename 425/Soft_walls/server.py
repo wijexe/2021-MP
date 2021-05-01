@@ -1,6 +1,8 @@
+#Бибин Александр, Шаповалов Кирилл
 import socket # библиотека для обмена сокетами
 import threading
 import queue
+
 
 
 
