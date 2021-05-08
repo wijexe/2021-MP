@@ -1,6 +1,10 @@
 
-from  Socket import Socket
-from threading import Thread
+from Socket import Socket
+import random
+from datetime import datetime
+
+from os import system
+import asyncio
 
 
 
@@ -9,32 +13,55 @@ from threading import Thread
 class Client(Socket):
     def __init__(self):
         super(Client, self).__init__()
+        self.messages = ""
+        self.name = input('Please write your name here: ')
+        if self.name == '':
+            self.name = 'Guest' + str(random.randint(1000, 9999))
+            print('Your name is:' + self.name)
 
     def set_up(self):
-        self.connect(
-            ("127.0.0.1", 1234)
-        )
+        try:
+            self.socket.connect(
+                ("127.0.0.1", 1234)
+            )
+        except ConnectionRefusedError:
+            print("Sorry, server is offline")
+            exit(0)
 
-        listen_thread = Thread(target=self.listen_socket)
-        listen_thread.start()
-
-        send_thread = Thread(target=self.send_data, args=(None,))
-        send_thread.start()
-
+        self.socket.setblocking(False)
 
         
-        def listen_socket(self, listened_socket=None):
-            while True:
-                data = self.recv(2048)  # receive
-                print(data.decode("utf-8"))
+    async def listen_socket(self, listened_socket=None):
+        while True:
 
-        def send_data(self, data):
-            while True:
-                self.send(input(":::").encode("utf-8"))
+            data = await self.main_loop.sock_recv(self.socket, 2048)
+            self.messages += f"{datetime.now().date()}: {data.decode('utf-8')}\n"
 
+            system("cls")
+            print(self.messages)
+
+    async def send_data(self, data=None):
+        while True:
+
+            data = await self.main_loop.run_in_executor(None, input)
+            if data == 'qqq':
+                break
+            elif data == '':
+                continue
+            data = '[' + self.name + ']' + '->' + data
+            await self.main_loop.sock_sendall(self.socket, data.encode("utf-8"))
+
+    async def main(self):
+        await asyncio.gather(
+
+                    self.main_loop.create_task(self.listen_socket()),
+                    self.main_loop.create_task(self.send_data())
+
+            )
     
 if __name__ == '__main__':
     client = Client()
     client.set_up()
-    
-    
+
+    client.start()
+
