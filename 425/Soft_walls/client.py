@@ -1,4 +1,7 @@
 #Бибин Александр, Шаповалов Кирилл
+=======
+#Перфилов Алексей, Васильев Леонид
+main
 import socket
 import threading
 import random
