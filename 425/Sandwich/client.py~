@@ -45,7 +45,7 @@ class Client(Socket):
 
             data = await self.main_loop.run_in_executor(None, input)
             if data == 'qqq':
-                data="**"
+                break
             elif data == '':
                 continue
             data = '[' + self.name + ']' + '->' + data

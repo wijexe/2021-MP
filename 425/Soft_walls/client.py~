@@ -89,4 +89,4 @@ def RunClient(IP, Port):
             
     os._exit(1)
 
-RunClient('192.168.43.162', 5000)
+RunClient('localhost', 5000)
