@@ -1,3 +1,4 @@
+#Cурков Никита
 import numpy as np
 Func=lambda x, y:-np.sqrt(3+y**2)/(np.sqrt(1-x**2)*y)
 def rungeKutta(x0, y0, x, h):
