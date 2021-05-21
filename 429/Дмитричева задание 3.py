@@ -30,7 +30,7 @@ def RungeKytta(x0, y0,xk, eps):
         x = xi[i-1] + h
         yi.append(y)
         xi.append(x)
-        print('x = ', x, 'y = ', y)
+        print('x = ', x, 'y = ', "%.12f" % y)
     return yi
 
 RungeKytta(x0, y0, xk, e)
