@@ -1,40 +1,42 @@
+import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-#y' = -((sqrt(3+y^2)/(sqrt(1-x^2)*y))
+sys.setrecursionlimit(10 ** 6)
 
-func = lambda x, y: (-1)*(np.sqrt(3+y*y)/((np.sqrt(1-x*x))*y))
+fun = lambda x, y: (-1) * (np.sqrt(3 + y * y) / ((np.sqrt(1 - x * x)) * y))
 
-eps = 10**(-12)
-x0 = 0
-y0 = 1
-e = 0.001
+yilist = []
+xilist = []
 
 xk = 0.9
-# точка в которой будет найдено значение функции
-
-def RungeKytta(x0, y0,xk, eps):
-    xi = []
-    yi = []
-    h = 2*eps
-    i = 0
-    xi.append(x0)
-    yi.append(y0)
-    n = (int)((xk - x0)/h)
-    for i in range(0, n):
-        k1 = h*func(xi[i],yi[i])
-        k2 = h*func(xi[i]+h/2, yi[i] +k1/2)
-        k3 = h*func(xi[i]+h/2, yi[i] +k2/2)
-        k4 = h*func(xi[i]+h, yi[i] +k3)
-        i +=1
-        y = yi[i-1] + (k1+2*k2+2*k3+k4)/6
-        x = xi[i-1] + h
-        yi.append(y)
-        xi.append(x)
-        print('x = ', x, 'y = ', "%.12f" % y)
-    return yi
-
-RungeKytta(x0, y0, xk, e)
+i = 0
+h = 0.01
+yii = 0
 
 
+def runge(x0, y0):
+    global i
+    k1 = fun(x0, y0)
+    k2 = fun((x0 + h / 2), y0 + (k1 * h) / 2)
+    k3 = fun((x0 + h / 2), y0 + (h * k2) / 2)
+    k4 = fun(x0 + h, y0 + (h * k3))
+    dely = (h * (k1 + 2 * k2 + 2 * k3 + k4)) / 6
+    yi = y0 + dely
+    yilist.append(yi)
+    y0 = yi
+    x0 += h
+    xilist.append(x0)
+    i += 1
+    global yii
+    yii = y0
+    if x0 < xk:
+        runge(x0, y0)
+    return round(yii * 1e12) / 1e12
 
 
+print('xk, yk: ',xk,',', runge(0, 1))
+print(i)
+plt.plot(xilist, yilist)
+plt.grid()
+plt.show()
