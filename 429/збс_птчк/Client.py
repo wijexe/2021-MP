@@ -1,77 +1,67 @@
 import socket
 from tkinter import *
-import random, time
+from tkinter import messagebox as mb
+import time
+import server_config as sc
+import client_config as cc
 
-SERVER_IP = socket.gethostbyname(socket.gethostname())  # Depends on machine!
-SERVER_PORT = 50050
-SERVER_ADDR = (SERVER_IP, SERVER_PORT)
-SERVER_CONN_ADDR = (SERVER_IP, SERVER_PORT-1)
-
-CLIENT_IP = socket.gethostbyname(socket.gethostname())
-CLIENT_PORT = random.randint(50051, 60000)
-CLIENT_ADDR = (CLIENT_IP, CLIENT_PORT)
-
-FORMAT = 'utf-8'
-TITLE = 'Chat'
-SIZE = '600x400'
-DEFAULT_NICKNAME = 'Guest-' + str(random.randint(1, 100))
 
 class Client:
-    def __init__(self, ip=CLIENT_IP, port=CLIENT_PORT):
+    def __init__(self, ip=cc.CLIENT_IP, port=cc.CLIENT_PORT):
         self._ip = ip
         self._port = port
 
     def RunSocket(self):
-        try:
-            self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self._sock.bind(self.getAddress())
-            self._sock.setblocking(False)
-            print('Socket runned')
-            print(f'[CURRENT CLIENT ADDRESS] {self.getAddress()}')
-        except:
-            print('[ERROR] Socket startup error\n')
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind(self.getAddress())
+        self._sock.setblocking(False)
+        print('Socket runned')
+        print(f'[CURRENT CLIENT ADDRESS] {self.getAddress()}')
         
     def CloseSocket(self):
-        self.getSocket().shutdown(socket.SHUT_RDWR)
         self.getSocket().close()
         print('Socket closed')
 
     def getSocket(self):
         return self._sock
 
-    def setAddres(self, ip, port):       
-        # !!! Позже перенести обработку исключений на конпки !!!
-        if port == SERVER_PORT and ip == SERVER_IP:
-            print('[ERROR] Client address cannot be equal to server address\n')
-            pass
-
-        self._ip = ip
-        self._port = port
+    def setAddress(self, ip: StringVar, port: StringVar, updateSock):
+        if port.get() == sc.SERVER_PORT and ip.get() == sc.SERVER_IP:
+            mb.showerror(title='ERROR', message='Client address cannot be equal to server address')
+            return
+        
+        if ip.get() == '' and port.get() == '':
+            return
+        
+        sock = self.getSocket()
+        sock.sendto('!CHANGEADDRESS'.encode(cc.FORMAT), sc.CONN_ADDR)
+        
+        new_ip = ip.get()
+        new_port = port.get()
+        
+        if new_ip == '':
+            new_ip = self.getIP()
+            
+        if new_port == '':
+            new_port = self.getPort()
+        else:
+            new_port = int(new_port)
+                       
+        self._ip = new_ip
+        self._port = new_port
         self.CloseSocket()
         print('Restarting socket...')
         self.RunSocket()
+        
+        ip.set('')
+        port.set('')
+        
+        sock = self.getSocket()
+        sock.sendto(''.encode(cc.FORMAT), sc.CONN_ADDR)
+        
+        updateSock(sock)
     
-    def setIP(self, ip):
-        if self.getPort() == SERVER_PORT and ip == SERVER_IP:
-            print('[ERROR] Client address cannot be equal to server address\n')
-            pass
-
-        self._ip = ip
-        self.CloseSocket()
-        print('Restarting socket...')
-        self.RunSocket()
-
-    def setPort(self, port):
-        if port == SERVER_PORT and self.getIP() == SERVER_IP:
-            print('[ERROR] Client address cannot be equal to server address\n')
-            pass
-
-        self._port = port
-        self.CloseSocket()
-        print('Restarting socket...')
-        self.RunSocket()
-
     def getAddress(self):
         return self._ip, self._port
     
@@ -83,45 +73,227 @@ class Client:
 
 
 class ConnectToServer:
-    def __init__(self, addr=SERVER_CONN_ADDR):
+    def __init__(self, addr=sc.CONN_ADDR):
         self._addr = addr
 
-    def Connecting(self, sock, name):
-        isConnected = False
-        servAddr = self.getAddress()
-        while not isConnected:
-            try:
-                sock.sendto(name.encode(FORMAT), servAddr)
-                answer = sock.recv(1).decode(FORMAT)
-                isConnected = bool(answer)
-            except:
-                time.sleep(1)
-        print('Connected to server')
+    def Connecting(self, sock: socket.socket):
+        name = input('Please enter your nickname: ')
+        if name != '':
+            servAddr = self.getAddress()
+            sock.setblocking(True)
+            sock.sendto(name.encode(cc.FORMAT), servAddr)
+            answer = int(sock.recv(8).decode(cc.FORMAT))
+            
+            if answer == -1:
+                print('[ERROR] Unacceptable nickname!')
+                sock.setblocking(False)
+                name = self.Connecting(sock)
+                return name
+                
+            elif answer == 0:
+                print('[ERROR] Chosen nickname is taken, request rejected')
+                sock.setblocking(False)
+                name = self.Connecting(sock)
+                return name
+
+            elif answer == 1:
+                sock.setblocking(False)
+                print('Connected to server')
+                return name
+        else:
+            name = cc.DEFAULT_NICKNAME
+            servAddr = self.getAddress()
+            sock.setblocking(True)
+            sock.sendto(name.encode(cc.FORMAT), servAddr)
+            answer = int(sock.recv(8).decode(cc.FORMAT))
+            sock.setblocking(False)
+            print('Connected to server')
+            return name
     
     def getAddress(self):
         return self._addr
 
 
+class Messenger:
+    def __init__(self, nickname, sock: socket.socket):
+        self._nickname = nickname
+        self._sock = sock
+
+
+    def loop(self, tk, log):
+        log.see(END)
+        try:
+            sock = self.getSocket()
+            message, addr = sock.recvfrom(1024)
+            message = message.decode(cc.FORMAT)
+            message += '\n'
+
+            # Coloring server messages
+            if addr == sc.CONN_ADDR:
+                if message == '!KICK\n':
+                    message = '[SERVER] You were kicked from the server'
+                    log.insert(END, message, ('server_to_client'))
+                    tk.after(5000, tk.quit)
+                    return
+                    
+                log.insert(END, message, ('server_to_client'))
+                
+            elif message.startswith('[SERVER]'):
+                log.insert(END, message, ('server_to_all'))
+                
+            else:
+                log.insert(END, message, ('client_to_all'))
+                
+            tk.after(10, self.loop, tk, log)
+        except BlockingIOError:
+            tk.after(10, self.loop, tk, log)
+
+
+    def send(self, nickname, text):
+        sock = self.getSocket()
+        old_name = self.getNickname()
+        name = nickname.get()
+
+        if name != old_name:
+            while True:
+                try:
+                    sock.sendto('!CHANGENAME'.encode(cc.FORMAT), sc.CONN_ADDR)
+                    sock.setblocking(True)
+                    sock.sendto(name.encode(cc.FORMAT), sc.CONN_ADDR)
+                    answer = sock.recv(8).decode(cc.FORMAT)
+                    sock.setblocking(False)
+
+                    if answer == '0' or answer == '-1':   # nickname is taken or unacceptable
+                        nickname.set(old_name)
+                        break
+
+                    self.setNickname(name)
+                    break
+                except BlockingIOError:
+                    time.sleep(1)
+
+        message = '%s' % text.get()
+        sock.sendto(message.encode(cc.FORMAT), sc.SERVER_ADDR)
+        text.set('')
+
+
+    def setNickname(self, nickname):
+        self._nickname = nickname
+
+
+    def getNickname(self):
+        return self._nickname
+    
+    
+    def getSocket(self):
+        return self._sock
+
+
+    def updateSock(self, sock: socket.socket):
+        self._sock = sock
+        
+        
 class ClientWindow:
-    def __init__(self, title=TITLE, size=SIZE, defaultName=DEFAULT_NICKNAME):
+    def __init__(self, setAddress: Client.setAddress, updateSock: Messenger.updateSock,
+                 title=cc.TITLE, size=cc.SIZE, defaultName=cc.DEFAULT_NICKNAME):
         self._tk = Tk()
+        self._tk['bg'] = 'LightGray'
         self._tk.title(title)
         self._tk.geometry(size)
+        self._tk.resizable(width=False, height=False)
+        
+        main_f1 = Frame(master=self._tk, bg='LightGray')
+        main_f1.pack(fill='both', expand=1)
+        
+        main_f2 = Frame(master=self._tk, bg='LightGray')
+        main_f2.pack(fill='both', expand=1)
 
+
+        # ---> <Log> <---
+        self._log = Text(master=main_f1, bg='LightGray', wrap=WORD)
+        self._log.tag_config('server_to_all', foreground='Red')
+        self._log.tag_config('server_to_client', foreground='Indigo')
+        self._log.tag_config('client_to_all', foreground='Blue')
+        
+        self._log.pack(fill='both', expand=1)
+        
+        
+        # ---> <Nickname and message input fields> <---
+        frame = Frame(master=main_f2)
+        frame.pack(side='left', fill='x', expand=1)
+        
         self._nickname = StringVar()
         self._nickname.set(defaultName)
         self._text = StringVar()
         self._text.set('')
 
-        self._log = Text(self._tk)
-        self._nick = Entry(self._tk, textvariable=self._nickname)
-        self._msg = Entry(self._tk, textvariable=self._text)
+        self._nick = Entry(master=frame, textvariable=self._nickname, bg='Silver')
+        self._msg = Entry(master=frame, textvariable=self._text, bg='Silver')
 
-        self._msg.pack(side='bottom', fill='x', expand='true')
-        self._nick.pack(side='bottom', fill='x', expand='true')
-        self._log.pack(side='top', fill='both', expand='true')
+        self._nick.pack(fill='both', expand=1)
+        self._msg.pack(fill='both', expand=1)
 
         self._msg.focus_set()
+        
+        
+        # ---> <Options> button <---
+        b1 = Button(master=main_f2, text='Options', bg='Silver', fg='red',
+                    activebackground='LightGray', activeforeground='red',
+                    font=('TkDefaultFont', 11, 'normal'), bd=0, padx=60, pady=25,
+                    command=lambda: self.openOptionsWindow(self._tk, setAddress, updateSock))
+        b1.pack(side='left', fill='both', padx=5, pady=5)
+                        
+    
+    def openOptionsWindow(self, tk, setAddress: Client.setAddress, 
+                          updateSock: Messenger.updateSock):
+        
+        options = Toplevel(tk, bg='Silver', padx=10, pady=10)
+        options.title('Options')
+        options.geometry('200x150+300+300')
+        options.resizable(width=False, height=False)
+
+        
+        f_b_label1 = Label(master=options, text='Connection settings', 
+                          font=('TkDefaultFont', 11, 'normal'), 
+                          fg='red', bg='Silver')
+        
+        f_b_label2 = Label(master=options, bg='Silver')
+        
+        f_b_label1.pack()
+        f_b_label2.pack()
+        
+        f_ip_entry = Frame(master=options, bg='Silver')
+        f_port_entry = Frame(master=options, bg='Silver')
+        
+        ip_label_b = Label(master=f_ip_entry, text='IP:\t', 
+                           fg='DarkBlue', bg='Silver', bd=1)
+        port_label_b = Label(master=f_port_entry, text='Port:\t', 
+                             fg='DarkBlue', bg='Silver', bd=1)
+        
+        ip_b = StringVar()
+        port_b = StringVar()
+        
+        ip_entry_b = Entry(master=f_ip_entry, textvariable=ip_b,
+                           justify='center', bg='LightGray')
+        port_entry_b = Entry(master=f_port_entry, textvariable=port_b, 
+                             justify='center', bg='LightGray')
+        
+        b = Button(master=options, text='Change', bg='DarkGray', fg='red',
+                   activebackground='Silver', activeforeground='red',
+                   font=('TkDefaultFont', 11, 'normal'), bd=0, height=2,
+                    command=lambda: setAddress(ip_b, port_b, updateSock))
+        
+        ip_label_b.pack(side='left', fill='x')
+        ip_entry_b.pack(side='left', fill='x')
+        
+        port_label_b.pack(side='left', fill='x')
+        port_entry_b.pack(side='left', fill='x')
+        
+        f_ip_entry.pack()
+        f_port_entry.pack(pady=5)
+        
+        b.pack(fill='both', expand=1)
+        
         
     def getTK(self):
         return self._tk
@@ -137,72 +309,30 @@ class ClientWindow:
 
     def getMessage(self):
         return self._msg
-
-
-class Messenger:
-    def __init__(self, nickname):
-        self._nickname = nickname
-
-    def loop(self, tk, log, sock):
-        log.see(END)
-        try:
-            message = sock.recv(1024).decode(FORMAT)
-            message += '\n'
-            log.insert(END, message)
-            tk.after(10, self.loop, tk, log, sock)
-        except:
-            tk.after(10, self.loop, tk, log, sock)
-
-    def send(self, event, nickname, text, sock):
-        old_nickname = self.getNickname()
-        nickname = nickname.get()
-
-        if nickname != old_nickname:
-            print('Waiting for the nickname change...')
-            isApproved = False
-            while not isApproved:
-                try:
-                    sock.sendto(nickname.encode(FORMAT), SERVER_CONN_ADDR)
-                    answer = sock.recv(1).decode(FORMAT)
-                    isApproved = bool(answer)
-                except:
-                    time.sleep(1)
-            print('Nickname changed')
-            self.setNickname(nickname)
-
-        message = '%s' % text.get()
-        sock.sendto(message.encode(FORMAT), SERVER_ADDR)
-        text.set('')
-
-    def setNickname(self, nickname):
-        self._nickname = nickname
-
-    def getNickname(self):
-        return self._nickname
-
-
+        
+        
 if __name__ == '__main__':
 
     client = Client()
     client.RunSocket()
-    nickname = input('Please enter your nickname: ')
-    if nickname == '':
-        nickname = DEFAULT_NICKNAME
-    window = ClientWindow(defaultName=nickname)
-
-    messenger = Messenger(nickname)
-    msg = window.getMessage()
-    nickname = window.getNickname()
-    text = window.getText()
     sock = client.getSocket()
-    msg.bind('<Return>', 
-             lambda event: messenger.send(event, nickname, text, sock))
-
+    
     connection = ConnectToServer()
-    connection.Connecting(sock, nickname.get())
+    nickname = connection.Connecting(sock)
+
+    messenger = Messenger(nickname, sock)
+    
+    window = ClientWindow(client.setAddress, messenger.updateSock, defaultName=nickname)
+    nickname = window.getNickname()
+
+    msg = window.getMessage()
+    text = window.getText()
+    msg.bind('<Return>', 
+             lambda event: messenger.send(nickname, text))
+
 
     tk = window.getTK()
     log = window.getLog()
-    tk.after(1, messenger.loop, tk, log, sock)
+    tk.after(1, messenger.loop, tk, log)
     tk.mainloop()
-    sock.sendto('!DISCONNECT'.encode(FORMAT), SERVER_CONN_ADDR)
+    client.getSocket().sendto('!DISCONNECT'.encode(cc.FORMAT), sc.CONN_ADDR)
