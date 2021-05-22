@@ -1,0 +1,32 @@
+import numpy as np
+
+#Решение данного ДУ
+def y(x,C):
+    return 3*(C*x+3*x+1)/(3*x+1)
+
+#Выражаем y' в изначальном уравнении через x и у
+def dy(x,C):
+    return (y(x,C)-3)/(3*x**2+x)
+    
+#Распишем левую чась исходного ДУ
+def l(x,C):
+    return y(x,C)-x*dy(x,y(x,C))
+    
+#Распишем правую чась исходного ДУ
+def r(x,C):
+    return 3*(1+np.power(x,2)*dy(x,y(x,C)))
+    
+def f(x,C,h):
+    while(l(x,C)-(r(x,C))>10**-12):
+        while(l(x,C)-(r(x,C)<0)):
+            h=h/2
+        C=C-h
+    return C,y(x,C),dy(x,C)
+print(f(x=5,C=20,h=5))    
+
+#Проверка
+hy=21.75
+dyu=0.234375
+hx=5
+tt=hy-hx*dyu-3*(1+np.power(hx,2)*dyu)
+print(tt)
