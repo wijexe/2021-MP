@@ -1,4 +1,3 @@
-from abc import abstractmethod
 import socket
 from tkinter import * 
 from tkinter import messagebox as mb
@@ -301,15 +300,21 @@ class ClientsList:
         
             
     def showClients(self):
-        clients_list = ''
+        clients_list = list()
         clients = self.getClients()
         
         if clients == set():
             clients_list = 'No connected clients found'
         else:
             for client in clients:
-                clients_list += '%s\n' % client[0]
-            
+                client = client[0]
+                if (len(clients_list) + 1) % 3 == 0:
+                    client += '\n'
+                    clients_list.append(client)
+                else:
+                    client += '\t'
+                    clients_list.append(client)
+        clients_list = ''.join(clients_list)
         mb.showinfo(title='Connected clients', message=clients_list)        
     
     

@@ -27,15 +27,9 @@ class Client:
         return self._sock
 
     def setAddress(self, ip: StringVar, port: StringVar, updateSock):
-        if port.get() == sc.SERVER_PORT and ip.get() == sc.SERVER_IP:
-            mb.showerror(title='ERROR', message='Client address cannot be equal to server address')
-            return
         
         if ip.get() == '' and port.get() == '':
             return
-        
-        sock = self.getSocket()
-        sock.sendto('!CHANGEADDRESS'.encode(cc.FORMAT), sc.CONN_ADDR)
         
         new_ip = ip.get()
         new_port = port.get()
@@ -48,6 +42,13 @@ class Client:
         else:
             new_port = int(new_port)
                        
+        if new_port == sc.SERVER_PORT and new_ip == sc.SERVER_IP:
+            mb.showerror(title='ERROR', message='Client address cannot be equal to server address')
+            return
+        
+        sock = self.getSocket()
+        sock.sendto('!CHANGEADDRESS'.encode(cc.FORMAT), sc.CONN_ADDR)
+        
         self._ip = new_ip
         self._port = new_port
         self.CloseSocket()
