@@ -1,0 +1,45 @@
+import numpy as np
+E=10**-12
+
+def ydiff(x,C):
+    return 3*(C*x+3*x+1)/(3*x+1)
+
+
+
+def dy(x,C):
+    return (ydiff(x,C)-3)/(3*x**2+x)
+
+
+
+def left(x,C):
+    return ydiff(x,C)-x*dy(x,ydiff(x,C))
+
+
+
+def right(x,C):
+    return 3*(1+np.power(x,2)*dy(x,ydiff(x,C)))
+
+
+
+
+
+def Co2(x,C,h):
+    if left(x,ydiff(x,C),dy(x,ydiff(x,C)))- right(x,ydiff(x,C),dy(x,ydiff(x,C))) <0:
+        h=h/2
+    C=C-h
+    return C
+
+def f(x,C,h):
+    while(left(x,C)-(right(x,C))>E):
+        while(left(x,C)-(right(x,C)<0)):
+            h=h/2
+        C=C-h
+    return C,ydiff(x,C),dy(x,C)
+
+print(f(x=5,C=20,h=5))
+
+hy=21.75
+dyu=0.234375
+hx=5
+tt=hy-hx*dyu-3*(1+np.power(hx,2)*dyu)
+print(tt)
