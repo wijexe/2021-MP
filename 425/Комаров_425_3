@@ -1,0 +1,51 @@
+import numpy as np 
+import math 
+from sympy import diff, symbols 
+import sympy as sympy 
+a,b,x, y = symbols('a b x y')
+def main(): 
+    def f(): 
+        return y-3-(3*x**2+x)
+ 
+    def P(): 
+        
+        a = diff(f(),y) 
+        return a 
+    print("Значение производной по Y для функции P =",P()) 
+    def Q(): 
+        
+        b = diff(f(),x) 
+        return b 
+    print("Значение производной по X для функции Q =",Q()) 
+    E = 10^(-12) 
+    if a == b: 
+        print("Метод полных дифференциалов применим к нашей функции") 
+    else: 
+        print("P не равно Q,метод полных дифференциалов не применим к нашей функции. ") 
+    
+    f = 1/(y-3) 
+    i1 = sympy.integrate(f, y) 
+    #return i1 
+    F = 1/(x+3*x**2) 
+    i2 = sympy.integrate(F, x) 
+    #return i2 
+    print("Выражение будет приведено к виду:",i1,'=',i2,"+ln|c| ")
+   
+   #учитывая, что все функции находятся под логарифмами с одним и тем же основанием, то логарифмы можно убрать. 
+   #y-3 = x/(1+3x) + c1 
+ 
+    def func(x_1,y_1): 
+        return ((y_1-3-x_1-3*x_1**2)/x_1+3*x_1**2)
+ 
+    i=1 
+    x_1 = np.linspace(0,100,1000) 
+    y_1 = np.linspace(0,100,1000) 
+    y1=func(x_1[i],y_1) 
+    xi=(x_1[i]) 
+    while xi <= E: 
+        i+=1 
+        y1+=func(x_1[i],y_1) 
+        xi=(x_1[i]) 
+ #print(y1) 
+    print("Наш корень уравнения:",xi) 
+print(main())
