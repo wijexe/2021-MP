@@ -1,0 +1,18 @@
+import numpy as np
+E=10**-12
+def ydiff(x, C):
+    return 3*(C*x+3*x+1)/(3*x+1) ### решение с калькулятора
+def dy(x, C):
+    return (ydiff(x, C)-3)/(3*x**2+x) ### выразили y' через x and y(найденный в калькуляторе)
+def left(x, C):
+    return ydiff(x, C)-x*dy(x, ydiff(x, C)) ### левая часть исходной функции
+def right(x, C):
+    return 3*(1+np.power(x,2)*dy(x,ydiff(x,C))) ### правая часть исходной функции
+def f(x, C, h):
+    if(left(x, C)-(right(x, C))>E):
+        if(left(x, C)-(right(x, C)<0)):
+            h = h/2
+        C = C - h
+        return f(x, C, h)
+    return C, ydiff(x, C), dy(x, C)
+print('y(x) =',f(x=5, C=20, h=5)[1],', при х=5')
