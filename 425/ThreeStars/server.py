@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
 import socket
 import threading
 import queue
@@ -73,3 +79,4 @@ server = Server(host, port,)
 server.runServer()
 open('name.txt', 'w').close()
 open('data.txt', 'w').close()
+
