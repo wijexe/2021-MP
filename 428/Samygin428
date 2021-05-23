@@ -1,0 +1,49 @@
+import numpy as np
+import sympy
+import matplotlib.pyplot as plt
+#Самыгин М 428
+#2(xy+y)y'+x(y^4+1)=0 
+#y'=-x(y^4+1)/2(xy+y); y(0)=1; y'(0.1)=2
+x=sympy.symbols('x')
+y=sympy.Function('y')(x)
+x_0=x0=0.5
+y_0=y0=2
+h=0.01
+E=10**(-12)
+y_value=[] #лист со значениями 1й и 2й производной
+t=[x0] #лист для отрисовки(x)
+yy=[] #лист для отрисовки(y)
+def factorial(n): #факториал
+    if n==0:
+        return 1
+    return factorial(n-1)
+def value(f,t,yy): #значение sympy функции
+    f=sympy.Add(f)
+    f=f.subs({x:t,y:yy})
+    return float(f)
+def derivative(func): #производная неявной функции с y=y(x)
+    f=sympy.idiff(func,y,x)
+    return f
+def Taylor(y1,y2,x): #ряд Тейлора до 2й производной
+    return y_0+h*y1/factorial(1)*(x-x_0)+(h/2)*y2/factorial(2)*(x-x_0)**2
+def delta_X(x,h):
+    return x+h
+funcc=-x*(y**4+1)/(2*(x*y+y)) #1я производная
+val=value(funcc,x0,y0)
+y_value.append(val)
+func1=derivative(funcc) #2я производная
+val=value(func1,x0,y0)
+y_value.append(val)
+y0=Taylor(y_value[0],y_value[1],x0)
+yy.append(y0)
+while abs(x0)<2:
+    x0=delta_X(x0, h) #изменение x
+    t.append(x0)
+    y0=Teilor(y_value[0],y_value[1],x0)
+    yy.append(y0)
+    val=value(funcc,x0,y0) #замена 1й производной при новом x
+    y_value[0]=val
+    val=value(func1,x0,y0) #замена 2й производной при новом x
+    y_value[1]=val
+plt.plot(t,yy)
+plt.grid()
