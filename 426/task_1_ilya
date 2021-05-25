@@ -1,0 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue May 25 14:11:24 2021
+
+@author: Bkmz
+"""
+#  Сделал Илья Зырянов 426 группа
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+A = 1  #  День рождения 1 января
+otvet = []
+grafic = []
+for x in range(101):
+    if ((A / 9 ) * x + math.sqrt(x**3)) != 0:
+        y = math.log( math.fabs((math.exp(math.cos(x)**A) * math.tan(x**2)) / ((A / 9 ) * x + math.sqrt(x**3))), 2 * x)
+        grafic.append(y)
+    if x == 1 or x == 5 or x == 10 or  x == 100:
+        otvet.append(y)
+print("Значение функиции при x = 1, y =", otvet[0], "\nЗначение функиции при x = 5, y =", otvet[1], "\nЗначение функиции при x = 10, y =", otvet[2], "\nЗначение функиции при x = 100, y =", otvet[3],)
+
+x = np.arange(0, 100, 1)
+plt.plot(x, grafic)
+plt.show()
